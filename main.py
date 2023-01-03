@@ -1,4 +1,5 @@
 import pygame
+import random
 from Player import *
 from Enemies import *
 from Bullet import *
@@ -30,11 +31,12 @@ RED = (255,0,0)
 clock = pygame.time.Clock()
 
 # Calling essential stuff
-player = Player(48, 215)
-enemies = Enemies()
+player = Player()
 enemy_zone = Enemy_Zone()
 danger_zone = Danger_Zone()
 bullets = []
+boats = []
+reference_enemy = Enemies(3)
 
 # Start Screen
 def startScreen():
@@ -101,6 +103,8 @@ def game_Screen():
     MIN_TIME_BETWEEN_ACTIONS = 1
     # Set the time of the last action to 0
     last_action_time = 0
+    # Calling a timer to spawn enemies
+    enemy_spawn_timer = 0
     # Check if player is alive
     alive = True
     
@@ -135,7 +139,7 @@ def game_Screen():
                 # Get the current time
                 current_time = pygame.time.get_ticks()
                 # Calculate the elapsed time between the press and release of the mouse button
-                elapsed_time = (current_time - key_press_time) / 1000
+                elapsed_time = (current_time - key_press_time) / 1000 / 3
                 # Calculate the elapsed time since the last action
                 action_elapsed_time = (current_time - last_action_time) / 1000
                 # If the elapsed time since the last action is greater than or equal to the minimum time between actions
@@ -155,8 +159,19 @@ def game_Screen():
                     
         # Player Update
         player.update()
+        # Update the boats
+        for enemy in boats:
+            enemy.update()
+        
+        # Spawn new enemy if timer is up and there are less than 4 enemies on the screen
+        current_time = pygame.time.get_ticks()
+        if current_time - enemy_spawn_timer > reference_enemy.spawn_delay and len(boats) < 4:
+            boats.append(Enemies(random.randint(1,5)))
+            enemy_spawn_timer = current_time
         # Clear the screen
         screen.fill(SKY_BLUE)
+        for enemy in boats:
+            enemy.draw(screen)
         # Player's area
         player.draw_area(screen, GREEN)
         # Danger zone

@@ -2,9 +2,9 @@ import pygame
 import math
 
 class Player(object):
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
+    def __init__(self):
+        self.x = 48
+        self.y = 215
         self.angle = 0
         self.length = 25
 
