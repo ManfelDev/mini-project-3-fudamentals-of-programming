@@ -1,8 +1,6 @@
 import pygame
 import math
 
-cannon = pygame.image.load('images/cannon.png')
-
 class Player(object):
     def __init__(self, x, y):
         self.x = x
