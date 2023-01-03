@@ -1,6 +1,7 @@
 import pygame
 from Player import *
 from Enemies import *
+from Bullet import *
 
 # Setting the window
 pygame.init()
@@ -31,6 +32,9 @@ clock = pygame.time.Clock()
 # Calling essential stuff
 player = Player(48, 215)
 enemies = Enemies()
+enemy_zone = Enemy_Zone()
+danger_zone = Danger_Zone()
+bullets = []
 
 # Start Screen
 def startScreen():
@@ -90,35 +94,80 @@ def startScreen():
         pygame.display.flip()
         
 # Game Screen
-def game_Screen():
+def game_Screen(): 
+    # Set up a variable to store the time when the key is first pressed
+    key_press_time = 0
+    # Set the minimum time between actions in seconds
+    MIN_TIME_BETWEEN_ACTIONS = 1
+    # Set the time of the last action to 0
+    last_action_time = 0
     # Check if player is alive
     alive = True
+    
     while alive:
-        # Updating the score
         # Set FPS
-        clock.tick(60)
+        clock.tick(60)  
         
-        # If the player wants to close the game
+        # Bullets Update
+        for b in bullets:
+            b.update()
+            # Check if the bullet is out of bounds
+            if b.active == False:
+                bullets.pop(bullets.index(b))
+            # Check if the bullet collides with the enemy zone
+            rect_b_ezone = pygame.Rect(enemy_zone.x, enemy_zone.y, enemy_zone.width, enemy_zone.height)
+            if rect_b_ezone.colliderect(b.x - b.radius, b.y - b.radius, b.radius * 2, b.radius * 2):
+                bullets.pop(bullets.index(b))
+        
+        # Check for events (inputs)
         for event in pygame.event.get():
+            # If the player wants to close the game
             if event.type == pygame.QUIT:
+                # Quit the game and close the window
                 pygame.quit() 
                 exit()
-                
-        # Mouse input
-        mouse_x, mouse_y = pygame.mouse.get_pos()
-        angle = math.atan2(player.y - mouse_y, mouse_x - player.x)
-        player.angle = min(max(angle, 0), math.pi/2.5)
-                
+            # If the player presses the mouse button
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                # Get the current time
+                key_press_time = pygame.time.get_ticks()
+            # If the player releases the mouse button
+            elif event.type == pygame.MOUSEBUTTONUP:
+                # Get the current time
+                current_time = pygame.time.get_ticks()
+                # Calculate the elapsed time between the press and release of the mouse button
+                elapsed_time = (current_time - key_press_time) / 1000
+                # Calculate the elapsed time since the last action
+                action_elapsed_time = (current_time - last_action_time) / 1000
+                # If the elapsed time since the last action is greater than or equal to the minimum time between actions
+                if action_elapsed_time >= MIN_TIME_BETWEEN_ACTIONS:
+                    # Store the current time as the time of the last action
+                    last_action_time = current_time
+                    # Check if theres less than 2 bullets on the field
+                    if len(bullets) < 2:
+                        if elapsed_time != 0:
+                            if elapsed_time < 0.7:
+                                bullets.append(Bullet(player, elapsed_time))
+                            if elapsed_time >= 0.7:
+                                elapsed_time = 0.7
+                                bullets.append(Bullet(player, elapsed_time))
+                    else:
+                        pass
+                    
+        # Player Update
+        player.update()
         # Clear the screen
         screen.fill(SKY_BLUE)
         # Player's area
         player.draw_area(screen, GREEN)
         # Danger zone
-        enemies.danger_zone(screen, ORANGE)
+        danger_zone.draw_zone(screen, ORANGE)
         # Enemy Zone
-        enemies.enemy_zone(screen, OCEAN_BLUE)
+        enemy_zone.draw_zone(screen, OCEAN_BLUE)
         # Player Draw
         player.draw(screen, BLACK)
+        # Bullet Draw
+        for b in bullets:
+            b.draw(screen, BLACK)
                 
         # Update the screen
         pygame.display.flip()

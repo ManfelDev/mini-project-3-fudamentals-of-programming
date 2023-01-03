@@ -10,6 +10,12 @@ class Player(object):
         self.angle = 0
         self.length = 25
 
+    def update(self):
+        # Mouse input
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        angle = math.atan2(self.y - mouse_y, mouse_x - self.x)
+        self.angle = min(max(angle, -math.pi/15), math.pi/2.5)
+
     def draw(self, screen, color):
         # Draw cannon
         end_x = self.x + self.length * math.cos(self.angle)
