@@ -22,6 +22,9 @@ class Player(object):
         if elapsed_time > 1000:  # If more than 1 second has passed
             self.score += 1  # Increase the score by 1
             self.start_time = pygame.time.get_ticks()  # Reset the start 
+            
+    def get_score(self):
+        return self.score
 
     def draw(self, screen, color):
         # Draw cannon

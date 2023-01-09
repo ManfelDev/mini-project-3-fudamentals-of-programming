@@ -103,7 +103,7 @@ def startScreen():
 def game_Screen():
     new_speed = 0 # Variable to update the speed
     key_press_time = 0 # Set up a variable to store the time when the key is first pressed
-    MIN_TIME_BETWEEN_ACTIONS = 1 # Set the minimum time between actions in seconds
+    min_time_between_actions = 1 # Set the minimum time between actions in seconds
     last_action_time = 0 # Set the time of the last action to 0
     enemy_spawn_timer = 0 # Calling a timer to spawn enemies
     score_font = pygame.font.Font(None, 30) # Setting the score font
@@ -112,7 +112,7 @@ def game_Screen():
     while alive:
         player.increase_score() # Increase the player score + 1 after 1 second
         score_text = score_font.render("Score: " + str(player.score), 1, WHITE) # Updating the score
-        clock.tick(60) # Set FPS
+        FPS = clock.tick(60) # Set FPS
       
         # Check for events (inputs)
         for event in pygame.event.get():
@@ -131,16 +131,16 @@ def game_Screen():
                 elapsed_time = (current_time - key_press_time) / 1000 / 2.5 # Calculate the elapsed time between the press and release of the mouse button
                 action_elapsed_time = (current_time - last_action_time) / 1000 # Calculate the elapsed time since the last action
                 # If the elapsed time since the last action is greater than or equal to the minimum time between actions
-                if action_elapsed_time >= MIN_TIME_BETWEEN_ACTIONS:
+                if action_elapsed_time >= min_time_between_actions:
                     last_action_time = current_time # Store the current time as the time of the last action
                     # Check if theres less than 2 bullets on the field
                     if len(bullets) < 2:
                         if elapsed_time != 0:
                             if elapsed_time < 0.7:
-                                bullets.append(Bullet(player, elapsed_time))
+                                bullets.append(Bullet(player,elapsed_time))
                             if elapsed_time >= 0.7:
                                 elapsed_time = 0.7
-                                bullets.append(Bullet(player, elapsed_time))
+                                bullets.append(Bullet(player,elapsed_time))
                     else:
                         pass
                     
@@ -167,12 +167,12 @@ def game_Screen():
                     
         # Bullets Update
         for b in bullets:
-            b.update()
+            b.update(FPS)
             # Check if the bullet is out of bounds
             if b.active == False:
                 bullets.pop(bullets.index(b))
-            # Check if the bullet collides with the enemy zone
-            if b.collider.colliderect(enemy_zone.collider):
+            # Check if the bullet collides with the ground
+            if b.collider.colliderect(enemy_zone.collider) or b.collider.colliderect(danger_zone.bullet_collider):
                 bullets.pop(bullets.index(b))
                 
         # Player Update
@@ -190,7 +190,7 @@ def game_Screen():
                 boats.append(new_boat)
             else:
                 boats.append(new_boat)
-                print(new_boat.spawn_delay)
+
             enemy_spawn_timer = current_time
             
         # Check if player have more lifes
@@ -244,6 +244,91 @@ def gameOverScreen():
     pygame.display.update()
     # Wait for 2 seconds
     pygame.time.delay(2000)
+
+def write_to_leaderboard(player):
+    # Read the scores from the leaderboard.txt file
+    scores = []
+    with open("leaderboard.txt", "r") as f:
+        for line in f:
+            score, initials = line.strip().split(",")
+            scores.append((int(score), initials))
+    # Sort the scores in descending order by score
+    scores = sorted(scores, key=lambda x: x[0], reverse=True)
+    # Prompt the player to enter their initials if their score is one of the top 10 scores
+    if len(scores) < 10 or player.get_score() > scores[9][0]:
+        while True:
+            initials = input("\nEnter your initials (3 Characters only): ")
+            # Convert the initials to uppercase
+            initials = initials.upper()
+            # Limit the length of the initials to 3 characters
+            if len(initials) == 3:
+                # Write the player's score and initials to the leaderboard.txt file
+                with open("leaderboard.txt", "a") as f:
+                    f.write(f"{player.get_score()},{initials}\n")
+                break
+            else:
+                print("\nError: Initials must be 3 characters long.")
+    # Update the display
+    pygame.display.flip()
+
+def display_scores(scores, screen):
+    # Create a font object
+    font = pygame.font.Font(None, 30)
+    leaderboard_font = pygame.font.Font(None, 40)
+    score_surfaces = []
+    score_rects = []
+    y_offset = 0
+    for score in scores:
+        # Create a surface with the leaderboard text
+        leaderboard_text = leaderboard_font.render("Leaderboard", True, ORANGE)
+        # Get the dimensions of the surface
+        leaderboard_rect = leaderboard_text.get_rect()
+        # Set the position of the surface
+        leaderboard_rect.center = (screen_center_x, 30)
+        # Create a surface with the score
+        score_surface = font.render(score, True, WHITE)
+        # Get the dimensions of the surface
+        score_rect = score_surface.get_rect()
+        # Set the position of the surface
+        score_rect.center = (screen_center_x, 70 + y_offset)
+        # Add the surface and rect to the lists
+        score_surfaces.append(score_surface)
+        score_rects.append(score_rect)
+        # Increment the y offset
+        y_offset += 30
+    # Clear the screen
+    screen.fill(SKY_BLUE)
+    # Draw the scores surfaces on the screen
+    for score_surface, score_rect in zip(score_surfaces, score_rects):
+        screen.blit(score_surface, score_rect)
+    screen.blit(leaderboard_text, leaderboard_rect)
+    # Update the display
+    pygame.display.flip()
+
+def display_leaderboard(player, screen):
+    scores = []
+    with open("leaderboard.txt", "r") as f:
+        for line in f:
+            score, initials = line.strip().split(",")
+            scores.append((int(score), initials))
+    # Sort the scores in descending order by score
+    scores = sorted(scores, key=lambda x: x[0], reverse=True)
+    # Keep track of the number of scores that have been added to the leaderboard
+    num_scores_added = 0
+    leaderboard_text = []
+    for i, (score, initials) in enumerate(scores[:10]):
+        leaderboard_text.append(f"{initials}: {score}")
+        num_scores_added += 1
+    # Add the player's score and initials to the leaderboard if it is one of the top 10 scores
+    if num_scores_added < 10 and player.get_score() >= scores[num_scores_added][0]:
+        leaderboard_text.append(f"{player.initials}: {player.get_score()}")
+        num_scores_added += 1
+    # Display the scores on the screen
+    display_scores(leaderboard_text, screen)
+    # Update the display
+    pygame.display.update()
+    # Wait for 6 seconds
+    pygame.time.delay(6000)
         
 # Main game loop
 while True:
@@ -253,7 +338,11 @@ while True:
     game_Screen()
     # Game Over Screen
     gameOverScreen()
-    # Reset
+    # Write the player's score and initials to the leaderboard
+    write_to_leaderboard(player)
+    # Display the leaderboard
+    display_leaderboard(player, screen)
+    # Reset the game variables and objects
     player.reset()
     reference_enemy.reset()
     boats = []

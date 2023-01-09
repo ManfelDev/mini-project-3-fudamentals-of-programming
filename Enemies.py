@@ -48,6 +48,7 @@ class Danger_Zone(object):
         self.x = 100
         self.y = 330
         self.width, self.height = 100, 50
+        self.bullet_collider = pygame.Rect(self.x, self.y, self.width, self.height)
         self.collider = pygame.Rect(0, self.y, self.width, self.height)
         
     def draw_zone(self, screen, color):
