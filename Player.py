@@ -34,7 +34,7 @@ class Player(object):
         # Draw cannon base
         pygame.draw.rect(screen, color, pygame.Rect(35,215,28,15))
         
-    def draw_lifes(self, screen, heart_image):
+    def draw_lives(self, screen, heart_image):
         x = 955
         y = 35
         for i in range(self.lives):
