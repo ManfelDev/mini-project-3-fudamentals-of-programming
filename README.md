@@ -1,5 +1,5 @@
 
-# Final IC Project
+# FP1 - Mini Project 3
 
 ### Objective of the Project:
 
